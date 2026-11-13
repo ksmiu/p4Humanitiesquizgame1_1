@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小學四年級人文科：人文大富翁 / 積分爭霸戰</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', '"Microsoft JhengHei"', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2.2s infinite',
+            'pulse-fast': 'pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'pop': 'popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(0.85) translateY(12px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' },
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      background-color: #f0f4f8;
+      background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      user-select: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* 3D Card Flip Animation for Lucky Star Cards */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Game Button Tactile Press */
+    .game-btn {
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+    }
+    .game-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    /* Active Team Glow */
+    .team-active-ring {
+      box-shadow: 0 0 0 4px #f59e0b, 0 12px 24px -4px rgba(245, 158, 11, 0.45);
+      transform: translateY(-4px) scale(1.02);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800 pb-44">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+  <!-- Top Navigation / Header Bar -->
+  <header class="bg-gradient-to-r from-indigo-700 via-blue-700 to-sky-600 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <!-- Title & Badge -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-amber-400 text-indigo-950 flex items-center justify-center text-2xl font-black shadow-md border-2 border-white">
+          🎲
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full tracking-wider">小學四年級人文科</span>
+            <span id="progress-badge" class="text-xs font-bold bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full">進度：0 / 50 題</span>
+          </div>
+          <h1 class="text-lg sm:text-2xl font-black tracking-tight drop-shadow-sm">人文大富翁：積分爭霸戰</h1>
+        </div>
+      </div>
+
+      <!-- Classroom Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Timer Widget -->
+        <div class="flex items-center bg-slate-900/40 backdrop-blur-sm px-2.5 py-1.5 rounded-xl border border-white/20 gap-1.5">
+          <span class="text-sm font-bold text-amber-300">⏱️</span>
+          <span id="timer-display" class="font-mono font-black text-lg w-10 text-center">20s</span>
+          <button onclick="toggleTimer()" id="timer-toggle-btn" class="px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition">
+            開始
+          </button>
+          <button onclick="cycleTimerDuration()" title="切換秒數 (15s/20s/30s)" class="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition">
+            切換秒數
+          </button>
+        </div>
+
+        <!-- View Switchers -->
+        <button onclick="switchView('board')" id="nav-board-btn" class="px-3 py-2 rounded-xl bg-white text-indigo-800 font-black text-xs sm:text-sm shadow hover:bg-amber-50 transition flex items-center gap-1">
+          <span>🗺️</span> <span>題目棋盤</span>
+        </button>
+
+        <button onclick="openTeacherSettings()" class="px-3 py-2 rounded-xl bg-indigo-900/60 hover:bg-indigo-900 text-white border border-white/25 font-bold text-xs sm:text-sm transition flex items-center gap-1">
+          <span>⚙️</span> <span class="hidden sm:inline">幸運星設定</span>
+        </button>
+
+        <button onclick="toggleSound()" id="sound-btn" class="p-2 rounded-xl bg-indigo-900/60 hover:bg-indigo-900 text-white border border-white/25 font-bold text-sm transition" title="開關音效">
+          🔊
+        </button>
+
+        <button onclick="openPodium()" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow transition flex items-center gap-1">
+          <span>🏆</span> <span>頒獎台</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-4">
+
+    <!-- Active Answering Team Banner -->
+    <div id="active-team-banner" class="mb-4 bg-white rounded-2xl p-3 shadow-sm border-2 border-indigo-100 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-amber-100 text-amber-700 font-black text-lg">🙋</span>
+        <div class="text-sm sm:text-base font-bold text-slate-700">
+          目前搶答組別：
+          <span id="current-answering-label" class="inline-block px-3 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-base sm:text-lg shadow-sm">
+            尚未指定（請點擊下方組別卡片）
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium">
+        <span>💡 提示：先點選下方「第 1–6 組」搶答，再進入題目作答即可自動計分！</span>
+        <button onclick="clearActiveTeam()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">
+          取消指定
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: BOARD / ROUND GRID VIEW -->
+    <section id="view-board" class="space-y-4">
+      <!-- Round Tabs -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="round-tabs">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- Current Round Info Banner -->
+      <div id="round-header-card" class="rounded-3xl p-4 sm:p-5 text-white shadow-md flex flex-wrap items-center justify-between gap-3 transition-all">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="round-badge" class="px-3 py-0.5 rounded-full bg-white/25 text-xs sm:text-sm font-black tracking-wide">第一回合</span>
+            <span id="round-rule-badge" class="px-3 py-0.5 rounded-full bg-amber-300 text-slate-950 text-xs sm:text-sm font-black">答對 +100 分</span>
+          </div>
+          <h2 id="round-title" class="text-xl sm:text-2xl font-black">香港歷史與文化遺產（第 1–10 題）</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="playNextUnanswered()" class="game-btn px-4 py-2.5 rounded-2xl bg-white text-slate-900 font-black text-sm sm:text-base hover:bg-amber-50 flex items-center gap-1.5">
+            <span>▶️</span> <span>進入下一題</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Monopoly-Style Question Tiles Grid -->
+      <div id="question-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+        <!-- 10 Question Cards per round injected by JS -->
+      </div>
+    </section>
+
+    <!-- VIEW 2: QUESTION PRESENTATION VIEW -->
+    <section id="view-question" class="hidden animate-pop">
+      <div class="bg-white rounded-3xl shadow-xl border-2 border-slate-200 overflow-hidden">
+        <!-- Question Top Meta Bar -->
+        <div id="q-top-bar" class="px-5 py-3.5 bg-indigo-600 text-white flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <button onclick="switchView('board')" class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 font-bold text-sm transition flex items-center gap-1">
+              <span>⬅️</span> <span>返回棋盤</span>
+            </button>
+            <span id="q-round-label" class="font-bold text-sm sm:text-base opacity-95">第一回合：香港歷史與文化遺產</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Lucky Star Indicator (Hidden until revealed or toggled if teacher shows hint) -->
+            <span id="q-lucky-indicator" class="hidden px-3 py-1 rounded-full bg-amber-300 text-slate-950 font-black text-xs sm:text-sm animate-pulse">
+              ⭐ 本題為隱藏幸運星搶分題！
+            </span>
+            <span id="q-points-pill" class="px-3.5 py-1 rounded-full bg-slate-900/40 font-black text-sm sm:text-base border border-white/25">
+              答對 +100 分
+            </span>
+          </div>
+        </div>
+
+        <!-- Question Body -->
+        <div class="p-5 sm:p-8">
+          <div class="flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div id="q-number-badge" class="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-100 text-indigo-700 font-black text-xl sm:text-3xl flex items-center justify-center border-2 border-indigo-300 shadow-sm">
+              1
+            </div>
+            <h3 id="q-text" class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-snug tracking-tight pt-1">
+              題目載入中...
+            </h3>
+          </div>
+
+          <!-- 4 Multiple Choice Options -->
+          <div id="q-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+            <!-- Options A, B, C, D injected by JS -->
+          </div>
+
+          <!-- Feedback & Teacher Action Panel (Shown after answering) -->
+          <div id="q-feedback-panel" class="hidden mt-6 p-5 rounded-2xl border-2 transition-all">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div id="feedback-headline" class="text-xl sm:text-2xl font-black flex items-center gap-2">
+                  🎉 答對了！
+                </div>
+                <p id="feedback-detail" class="text-base sm:text-lg font-bold text-slate-700">
+                  正確答案是 B。
+                </p>
+                <p id="feedback-teacher-note" class="hidden text-sm sm:text-base font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200 mt-1">
+                </p>
+              </div>
+
+              <!-- Action Buttons on Result -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Lucky Card Draw CTA (Appears only if Lucky Star question answered correctly!) -->
+                <button id="draw-lucky-card-btn" onclick="openLuckyCardModal()" class="hidden game-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 font-black text-base sm:text-lg border-2 border-white shadow-lg animate-bounce">
+                  🌟 抽取幸運功能卡！
+                </button>
+
+                <!-- Quick Manual Award Buttons if no team was selected -->
+                <div id="quick-award-box" class="hidden flex flex-wrap items-center gap-1.5 bg-slate-100 p-2 rounded-2xl border border-slate-200">
+                  <span class="text-xs font-black text-slate-600 px-1">補發分數給：</span>
+                  <button onclick="quickAwardToTeam(0)" class="px-2.5 py-1.5 rounded-xl bg-rose-500 text-white font-black text-xs hover:bg-rose-600">第1組</button>
+                  <button onclick="quickAwardToTeam(1)" class="px-2.5 py-1.5 rounded-xl bg-orange-500 text-white font-black text-xs hover:bg-orange-600">第2組</button>
+                  <button onclick="quickAwardToTeam(2)" class="px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-black text-xs hover:bg-amber-600">第3組</button>
+                  <button onclick="quickAwardToTeam(3)" class="px-2.5 py-1.5 rounded-xl bg-emerald-500 text-white font-black text-xs hover:bg-emerald-600">第4組</button>
+                  <button onclick="quickAwardToTeam(4)" class="px-2.5 py-1.5 rounded-xl bg-sky-500 text-white font-black text-xs hover:bg-sky-600">第5組</button>
+                  <button onclick="quickAwardToTeam(5)" class="px-2.5 py-1.5 rounded-xl bg-purple-500 text-white font-black text-xs hover:bg-purple-600">第6組</button>
+                </div>
+
+                <button onclick="resetCurrentQuestion()" class="px-3.5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition">
+                  🔄 重試此題
+                </button>
+
+                <button onclick="goToNextQuestion()" class="game-btn px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-base transition flex items-center gap-1.5">
+                  <span>下一題</span> <span>➡️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Persistent Bottom 6-Team Scoreboard Dock -->
+  <footer class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t-2 border-slate-700 shadow-2xl z-30 px-2 sm:px-4 py-2.5">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3" id="scoreboard-grid">
+        <!-- 6 Team Cards injected by JS -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL 1: LUCKY STAR FUNCTION CARD DRAW -->
+  <div id="lucky-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-amber-50 to-white rounded-3xl max-w-lg w-full p-6 border-4 border-amber-400 shadow-2xl text-center animate-pop relative">
+      <button onclick="closeLuckyModal()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-slate-200 hover:bg-slate-300 font-black text-slate-600 flex items-center justify-center">✕</button>
+
+      <div class="inline-block px-4 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-sm mb-2 shadow-sm">
+        ⭐ 幸運星搶分題獎勵 ⭐
+      </div>
+      <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mb-1">神秘功能卡抽獎</h3>
+      <p id="lucky-drawer-team-text" class="text-sm sm:text-base font-bold text-indigo-700 mb-4">
+        請點擊下方卡片翻開你的命運！
+      </p>
+
+      <!-- Flip Card Container -->
+      <div class="perspective-1000 w-64 h-80 mx-auto mb-5 cursor-pointer" onclick="flipLuckyCard()">
+        <div id="lucky-card-inner" class="relative w-full h-full transform-style-3d">
+          <!-- Card Back -->
+          <div class="absolute inset-0 backface-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 border-4 border-white shadow-xl flex flex-col items-center justify-center p-5 text-white">
+            <div class="text-6xl mb-3 animate-bounce">🃏</div>
+            <div class="text-2xl font-black tracking-wider mb-1">人文幸運卡</div>
+            <div class="text-xs font-bold bg-black/25 px-3 py-1 rounded-full">點擊翻開卡片</div>
+          </div>
+
+          <!-- Card Front -->
+          <div id="lucky-card-front" class="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-white border-4 border-amber-400 shadow-xl flex flex-col items-center justify-between p-5 text-slate-900">
+            <div id="card-badge" class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 font-black text-xs">
+              功能卡
+            </div>
+            <div id="card-icon" class="text-6xl my-2">⚡</div>
+            <div>
+              <h4 id="card-title" class="text-2xl font-black text-slate-900 mb-1.5">卡片名稱</h4>
+              <p id="card-desc" class="text-sm font-bold text-slate-600 leading-relaxed">卡片效果說明</p>
+            </div>
+            <div class="w-full pt-2 border-t border-slate-100 text-xs font-bold text-amber-600">
+              人文大富翁特別道具
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Action Controls (Appears after flip) -->
+      <div id="lucky-card-actions" class="hidden space-y-3">
+        <!-- Target team selector for Steal / Swap cards -->
+        <div id="card-target-selector" class="hidden bg-slate-100 p-3 rounded-2xl">
+          <p id="card-target-prompt" class="text-xs font-black text-slate-700 mb-2">請選擇目標組別：</p>
+          <div id="card-target-buttons" class="grid grid-cols-3 gap-2"></div>
+        </div>
+
+        <button id="apply-card-btn" onclick="applyLuckyCardEffect()" class="game-btn w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg shadow-md">
+          ✅ 立即使用效果！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: TEACHER SETTINGS & LUCKY STAR CONFIG -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl border-2 border-slate-200 overflow-hidden animate-pop">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <h3 class="text-xl font-black">教師控制台：幸運星題設定與組名編輯</h3>
+        </div>
+        <button onclick="closeTeacherSettings()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 font-black flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <!-- Edit Team Names -->
+        <div>
+          <h4 class="font-black text-slate-800 mb-2 flex items-center gap-1.5">
+            <span>🏷️</span> <span>自訂組別名稱（預設：第 1 組 – 第 6 組）</span>
+          </h4>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="team-name-inputs">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Toggle Lucky Star Questions -->
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 class="font-black text-slate-800 flex items-center gap-1.5">
+              <span>⭐</span> <span>設定隱藏「幸運星搶分題」（點擊題號切換）</span>
+            </h4>
+            <button onclick="resetDefaultLuckyStars()" class="text-xs px-3 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold">
+              恢復預設（每回合第5及第10題）
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">在棋盤頁面上幸運星題會保持隱藏以製造驚喜，學生答對該題時才會觸發抽卡！</p>
+          <div class="grid grid-cols-5 sm:grid-cols-10 gap-2" id="lucky-star-toggles">
+            <!-- 50 toggle pills injected by JS -->
+          </div>
+        </div>
+
+        <!-- Danger Zone: Reset Game -->
+        <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="text-xs text-slate-500">
+            遊戲進度與分數會自動儲存在此瀏覽器中。如需重新開始新課堂，請按重置。
+          </div>
+          <button onclick="confirmResetGame()" class="px-4 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-sm transition">
+            🗑️ 重置所有分數與進度
+          </button>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button onclick="closeTeacherSettings()" class="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm">
+          完成並儲存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: FINAL PODIUM / AWARDS -->
+  <div id="podium-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-indigo-900 via-slate-900 to-slate-950 text-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 border-4 border-amber-400 shadow-2xl text-center animate-pop relative overflow-hidden">
+      <button onclick="closePodium()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 font-black flex items-center justify-center">✕</button>
+
+      <div class="text-4xl mb-1">🏆🎉🏆</div>
+      <h3 class="text-2xl sm:text-4xl font-black text-amber-300 tracking-wide mb-1">人文大富翁：光榮龍虎榜</h3>
+      <p class="text-sm sm:text-base text-slate-300 font-medium mb-6">恭喜所有表現出色的同學！</p>
+
+      <!-- Top 3 Podium -->
+      <div id="podium-top3" class="grid grid-cols-3 gap-3 sm:gap-5 items-end max-w-xl mx-auto mb-6 pt-4">
+        <!-- 2nd, 1st, 3rd places injected by JS -->
+      </div>
+
+      <!-- Ranks 4 to 6 -->
+      <div id="podium-others" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-2xl mx-auto mb-6">
+        <!-- 4th, 5th, 6th places injected by JS -->
+      </div>
+
+      <div class="flex justify-center gap-3">
+        <button onclick="fireConfetti()" class="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm sm:text-base">
+          🎊 再次放禮花慶祝
+        </button>
+        <button onclick="closePodium()" class="px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm sm:text-base">
+          返回課堂
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Toast Notification (No alert() used anywhere) -->
+  <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    // =========================================================================
+    // 1. COMPLETE 50-QUESTION BANK (VERBATIM TRADITIONAL CHINESE)
+    // =========================================================================
+    const ROUNDS = [
+      {
+        id: 1,
+        shortTitle: "第一回合",
+        title: "第一回合：香港歷史與文化遺產（第 1–10 題）",
+        pointsCorrect: 100,
+        pointsWrong: 0,
+        ruleText: "答對每題 +100 分",
+        colorClass: "from-rose-600 to-pink-600",
+        badgeBg: "bg-rose-100 text-rose-800 border-rose-300"
+      },
+      {
+        id: 2,
+        shortTitle: "第二回合",
+        title: "第二回合：香港經濟發展與城市面貌（第 11–20 題）",
+        pointsCorrect: 100,
+        pointsWrong: 0,
+        ruleText: "答對每題 +100 分",
+        colorClass: "from-amber-500 to-orange-600",
+        badgeBg: "bg-amber-100 text-amber-800 border-amber-300"
+      },
+      {
+        id: 3,
+        shortTitle: "第三回合",
+        title: "第三回合：個人理財與精明消費（第 21–30 題）",
+        pointsCorrect: 100,
+        pointsWrong: 0,
+        ruleText: "答對每題 +100 分",
+        colorClass: "from-emerald-600 to-teal-600",
+        badgeBg: "bg-emerald-100 text-emerald-800 border-emerald-300"
+      },
+      {
+        id: 4,
+        shortTitle: "第四回合・雙倍",
+        title: "第四回合：健康生活與環境保護（第 31–40 題）",
+        pointsCorrect: 200,
+        pointsWrong: 0,
+        ruleText: "雙倍挑戰：答對每題 +200 分！",
+        colorClass: "from-blue-600 to-indigo-600",
+        badgeBg: "bg-blue-100 text-blue-800 border-blue-300"
+      },
+      {
+        id: 5,
+        shortTitle: "第五回合・生死戰",
+        title: "第五回合：祖國面貌、中華文化與《基本法》（第 41–50 題）",
+        pointsCorrect: 300,
+        pointsWrong: -100,
+        ruleText: "終極生死戰：答對 +300 分，答錯 -100 分！",
+        colorClass: "from-purple-700 to-fuchsia-700",
+        badgeBg: "bg-purple-100 text-purple-800 border-purple-300"
+      }
+    ];
+
+    const QUESTIONS = [
+      // Round 1 (1-10)
+      {
+        id: 1, round: 1,
+        q: "香港開埠初期（19世紀中葉）能夠迅速發展成為轉口港，最主要的原因是什麼？",
+        options: [
+          "A. 擁有豐富的石油和煤礦資源",
+          "B. 水深港闊，而且是免收關稅的自由港",
+          "C. 當時已經有完善的高鐵網絡",
+          "D. 農業非常發達，出口大量稻米"
+        ],
+        answer: 1
+      },
+      {
+        id: 2, round: 1,
+        q: "位於長沙灣的「李鄭屋漢墓」，證明了香港早在哪個朝代已經有人類居住及受中原文化影響？",
+        options: [
+          "A. 唐朝",
+          "B. 宋朝",
+          "C. 東漢時期",
+          "D. 清朝"
+        ],
+        answer: 2
+      },
+      {
+        id: 3, round: 1,
+        q: "每年農曆四月初八在長洲舉行的「太平清醮」，最著名的兩項傳統活動是什麼？",
+        options: [
+          "A. 舞火龍與放水燈",
+          "B. 搶包山與飄色會景巡遊",
+          "C. 龍舟競渡與吃粽子",
+          "D. 猜燈謎與賞花燈"
+        ],
+        answer: 1
+      },
+      {
+        id: 4, round: 1,
+        q: "下列哪一項被列入國家級非物質文化遺產，通常在每年中秋節期間於大坑舉行？",
+        options: [
+          "A. 大坑舞火龍",
+          "B. 麒麟舞",
+          "C. 粵劇",
+          "D. 涼茶製作技藝"
+        ],
+        answer: 0
+      },
+      {
+        id: 5, round: 1,
+        q: "香港開埠初期，華人主要聚居在港島哪一帶，並逐漸形成傳統商業及社區中心？",
+        options: [
+          "A. 太平山頂",
+          "B. 上環及中環一帶（如太平山街）",
+          "C. 淺水灣",
+          "D. 柴灣"
+        ],
+        answer: 1
+      },
+      {
+        id: 6, round: 1,
+        q: "1848年建成的「文武廟」位於上環荷李活道，早期除了是廟宇外，還具備什麼重要社會功能？",
+        options: [
+          "A. 消防局與警察局",
+          "B. 華人議事及排解糾紛的場所",
+          "C. 郵政總局",
+          "D. 蒸汽火車總站"
+        ],
+        answer: 1
+      },
+      {
+        id: 7, round: 1,
+        q: "下列哪一棟建築物屬於香港法定古蹟，曾是九廣鐵路（英段）的終點站？",
+        options: [
+          "A. 尖沙咀鐘樓",
+          "B. 匯豐總行大廈",
+          "C. 國際金融中心",
+          "D. 香港會議展覽中心"
+        ],
+        answer: 0
+      },
+      {
+        id: 8, round: 1,
+        q: "客家圍村（如沙田曾大屋、粉嶺龍躍頭）在建築設計上四周建有高牆和炮樓，主要目的是什麼？",
+        options: [
+          "A. 為了舉辦大型演唱會",
+          "B. 為了防禦盜賊和野獸侵襲",
+          "C. 為了種植高大的果樹",
+          "D. 為了方便停泊船隻"
+        ],
+        answer: 1
+      },
+      {
+        id: 9, round: 1,
+        q: "早期香港的主要經濟活動以什麼為主？",
+        options: [
+          "A. 金融銀行業與旅遊業",
+          "B. 捕魚、採珠、曬鹽及種植香木",
+          "C. 汽車製造與航空業",
+          "D. 電腦軟件開發"
+        ],
+        answer: 1
+      },
+      {
+        id: 10, round: 1,
+        q: "「港式奶茶」製作技藝是香港非物質文化遺產之一，它融合了哪兩種文化的飲食特色？",
+        options: [
+          "A. 日本與韓國",
+          "B. 英國下午茶文化與華人飲食習慣",
+          "C. 法國與意大利",
+          "D. 泰國與越南"
+        ],
+        answer: 1
+      },
+
+      // Round 2 (11-20)
+      {
+        id: 11, round: 2,
+        q: "1950至1970年代，香港經濟轉型，哪一個行業迅速起飛，令「香港製造」享譽全球？",
+        options: [
+          "A. 輕工業（如紡織、製衣、塑膠花及鐘錶業）",
+          "B. 重工業（如造船、煉鋼及飛機製造）",
+          "C. 畜牧業",
+          "D. 石油開採業"
+        ],
+        answer: 0
+      },
+      {
+        id: 12, round: 2,
+        q: "1970年代末期，中國內地實行「改革開放」政策，對香港的製造業帶來什麼轉變？",
+        options: [
+          "A. 香港工廠全部倒閉，沒有人再做生意",
+          "B. 許多港商把廠房北移至珠江三角洲，香港轉型發展服務業與金融業",
+          "C. 內地工人全部搬來香港居住",
+          "D. 香港不再與內地進行任何貿易"
+        ],
+        answer: 1
+      },
+      {
+        id: 13, round: 2,
+        q: "下列哪一項不屬於香港的「四大支柱產業」？",
+        options: [
+          "A. 金融服務業",
+          "B. 旅遊業",
+          "C. 貿易及物流業",
+          "D. 採礦及林業"
+        ],
+        answer: 3
+      },
+      {
+        id: 14, round: 2,
+        q: "香港是國際著名的「航空樞紐」，現時香港國際機場位於哪裏？",
+        options: [
+          "A. 九龍城啟德",
+          "B. 大嶼山赤鱲角",
+          "C. 沙田馬料水",
+          "D. 南丫島"
+        ],
+        answer: 1
+      },
+      {
+        id: 15, round: 2,
+        q: "連接香港、珠海和澳門的大型跨海通道叫什麼名字？",
+        options: [
+          "A. 青馬大橋",
+          "B. 港珠澳大橋",
+          "C. 汀九橋",
+          "D. 昂船洲大橋"
+        ],
+        answer: 1
+      },
+      {
+        id: 16, round: 2,
+        q: "下列哪一種交通工具於1904年投入服務，至今仍行駛於香港島北岸，被市民親切地稱為「叮叮」？",
+        options: [
+          "A. 山頂纜車",
+          "B. 香港電車",
+          "C. 天星小輪",
+          "D. 輕便鐵路"
+        ],
+        answer: 1
+      },
+      {
+        id: 17, round: 2,
+        q: "香港土地資源有限，政府主要透過哪兩種方法增加土地供應以興建房屋和基建？",
+        options: [
+          "A. 填海造地與開發新市鎮",
+          "B. 把所有郊野公園變成工廠",
+          "C. 向外國購買泥土堆高太平山",
+          "D. 拆除所有醫院和學校"
+        ],
+        answer: 0
+      },
+      {
+        id: 18, round: 2,
+        q: "下列哪一個地區是香港最早發展的第一代新市鎮之一？",
+        options: [
+          "A. 荃灣、沙田及屯門",
+          "B. 中環及金鐘",
+          "C. 尖沙咀及旺角",
+          "D. 銅鑼灣及灣仔"
+        ],
+        answer: 0
+      },
+      {
+        id: 19, round: 2,
+        q: "粵港澳大灣區由香港、澳門兩個特別行政區，以及廣東省多少個城市組成？",
+        options: [
+          "A. 5 個",
+          "B. 7 個",
+          "C. 9 個",
+          "D. 11 個"
+        ],
+        answer: 2
+      },
+      {
+        id: 20, round: 2,
+        q: "廣深港高速鐵路（香港段）的總站設於哪裏，方便市民快速往返內地各大城市？",
+        options: [
+          "A. 紅磡站",
+          "B. 香港西九龍站",
+          "C. 羅湖站",
+          "D. 上水站"
+        ],
+        answer: 1
+      },
+
+      // Round 3 (21-30)
+      {
+        id: 21, round: 3,
+        q: "小明想用零用錢買東西，他同時想要「新書包（舊的已破爛）」和「最新款遊戲機」。根據理財原則，他應該怎樣決定？",
+        options: [
+          "A. 先買遊戲機，書包用膠紙貼好繼續用",
+          "B. 分清「需要」與「想要」，優先購買新書包",
+          "C. 向同學借錢把兩樣都買下來",
+          "D. 每天不吃早餐來買遊戲機"
+        ],
+        answer: 1
+      },
+      {
+        id: 22, round: 3,
+        q: "把平時節省下來的零用錢存入銀行，除了安全之外，還有什麼好處？",
+        options: [
+          "A. 銀行會免費送贈玩具",
+          "B. 可以賺取利息，讓財富慢慢累積",
+          "C. 錢會自動變成外幣",
+          "D. 永遠不需要再工作"
+        ],
+        answer: 1
+      },
+      {
+        id: 23, round: 3,
+        q: "制定「個人收支預算表」時，最健康的理財原則是什麼？",
+        options: [
+          "A. 支出大於收入（入不敷出）",
+          "B. 收入大於支出，並預留一部分作為儲蓄",
+          "C. 收到多少錢就立刻全部花光",
+          "D. 只記錄支出，不記錄收入"
+        ],
+        answer: 1
+      },
+      {
+        id: 24, round: 3,
+        q: "我們在超級市場購買預先包裝食物時，查看包裝上的「營養標籤」最主要的目的是什麼？",
+        options: [
+          "A. 看看食物是由哪一位明星代言",
+          "B. 了解食物的能量及營養素含量（如糖、鈉、脂肪），作出健康選擇",
+          "C. 比較哪一間超市的售價最便宜",
+          "D. 確認食物包裝盒是否防水"
+        ],
+        answer: 1
+      },
+      {
+        id: 25, round: 3,
+        q: "根據香港法例，預先包裝食物的營養標籤必須列出能量及多少種指定營養素（俗稱「1+7」）？",
+        options: [
+          "A. 3 種",
+          "B. 5 種",
+          "C. 7 種",
+          "D. 10 種"
+        ],
+        answer: 2
+      },
+      {
+        id: 26, round: 3,
+        q: "購買食物前，除了看營養標籤，還必須留意包裝上的哪一項重要日期？",
+        options: [
+          "A. 工廠成立日期",
+          "B. 「此日期前最佳」或「此日期或之前食用」",
+          "C. 貨車運送日期",
+          "D. 超市開業日期"
+        ],
+        answer: 1
+      },
+      {
+        id: 27, round: 3,
+        q: "下列哪一種行為屬於「精明消費」？",
+        options: [
+          "A. 看到「買一送一」就立刻購買，即使根本用不著",
+          "B. 購物前先格價、檢查貨品質素及了解退換貨條款",
+          "C. 為了獲得贈品而購買大量昂貴的零食",
+          "D. 付錢後從不檢查收據（單據）"
+        ],
+        answer: 1
+      },
+      {
+        id: 28, round: 3,
+        q: "什麼是「綠色消費」？",
+        options: [
+          "A. 只購買綠色包裝的商品",
+          "B. 在消費時考慮對環境的影響，實踐減廢、重用及回收",
+          "C. 每天只吃綠色蔬菜",
+          "D. 只在晚上開燈購物"
+        ],
+        answer: 1
+      },
+      {
+        id: 29, round: 3,
+        q: "如果消費者購買了有問題的貨品，向店舖投訴不果，可以向香港哪一個法定機構尋求協助？",
+        options: [
+          "A. 天文台",
+          "B. 消費者委員會（消委會）",
+          "C. 漁農自然護理署",
+          "D. 康樂及文化事務署"
+        ],
+        answer: 1
+      },
+      {
+        id: 30, round: 3,
+        q: "網上購物雖然方便，但小學生在使用網購時應注意什麼？",
+        options: [
+          "A. 隨便輸入父母的信用卡密碼",
+          "B. 必須先徵得家長同意，並在家長陪同下於信譽良好的平台購物",
+          "C. 在不明來歷的網站點擊中獎連結",
+          "D. 把家庭住址和電話公開發布在留言區"
+        ],
+        answer: 1
+      },
+
+      // Round 4 (31-40) - Double Challenge (200 pts)
+      {
+        id: 31, round: 4,
+        q: "根據衞生署「健康飲食金字塔」，我們每天應該吃最多的是哪一類食物？",
+        options: [
+          "A. 油、鹽、糖類",
+          "B. 肉、魚、蛋及代替品",
+          "C. 穀物類（如飯、麵、麵包）",
+          "D. 奶類及代替品"
+        ],
+        answer: 2
+      },
+      {
+        id: 32, round: 4,
+        q: "「三低一高」是健康飲食的重要原則，其中的「一高」是指什麼？",
+        options: [
+          "A. 高糖分",
+          "B. 高脂肪",
+          "C. 高膳食纖維",
+          "D. 高鹽分（高鈉）"
+        ],
+        answer: 2
+      },
+      {
+        id: 33, round: 4,
+        q: "青春期前夕（小學高年級階段），同學的身體和心理會開始出現變化。面對這些變化，哪種態度最正確？",
+        options: [
+          "A. 感到羞恥，不敢告訴任何人",
+          "B. 嘲笑發育較快或較慢的同學",
+          "C. 明白這是正常的成長過程，保持個人衞生並主動向家長或老師請教",
+          "D. 為了減肥而完全不吃正餐"
+        ],
+        answer: 2
+      },
+      {
+        id: 34, round: 4,
+        q: "當我們感到學習壓力大或情緒低落時，以下哪一種處理方法最健康？",
+        options: [
+          "A. 把自己關在房間裡發脾氣，摔壞東西",
+          "B. 做適量運動、聽音樂，或向信任的家人、老師傾訴",
+          "C. 整晚打電子遊戲不睡覺",
+          "D. 暴飲暴食大量零食"
+        ],
+        answer: 1
+      },
+      {
+        id: 35, round: 4,
+        q: "下列哪一種行為最容易引發「網絡欺凌」？",
+        options: [
+          "A. 在網上群組與同學討論功課",
+          "B. 未經同意把同學的醜照上傳到社交媒體並加以嘲笑",
+          "C. 讚好朋友分享的旅遊風景照",
+          "D. 轉發官方天文台的颱風消息"
+        ],
+        answer: 1
+      },
+      {
+        id: 36, round: 4,
+        q: "香港每天產生大量都市固體廢物，目前主要依賴哪種方式處理不能回收的垃圾？",
+        options: [
+          "A. 全部運往外國",
+          "B. 運往堆填區進行衛生堆填",
+          "C. 直接倒入維多利亞港",
+          "D. 在各區公園露天焚燒"
+        ],
+        answer: 1
+      },
+      {
+        id: 37, round: 4,
+        q: "在環保「4R」原則中，自備水樽和購物袋減少使用即棄物品，屬於哪一個「R」？",
+        options: [
+          "A. Reduce（減少使用）",
+          "B. Reuse（物盡其用）",
+          "C. Recycle（循環再造）",
+          "D. Replace（替代使用）"
+        ],
+        answer: 0
+      },
+      {
+        id: 38, round: 4,
+        q: "藍、黃、啡三色分類回收箱中，「啡色」回收箱專門用來收集哪一類物品？",
+        options: [
+          "A. 廢紙",
+          "B. 金屬",
+          "C. 塑膠",
+          "D. 玻璃樽"
+        ],
+        answer: 2,
+        note: "💡 老師口訣提示：藍廢紙、黃鋁罐、啡膠樽！（現時玻璃樽有獨立的綠色回收桶）"
+      },
+      {
+        id: 39, round: 4,
+        q: "全球暖化導致極端天氣頻發，主要是因為大氣中哪一種溫室氣體濃度過高？",
+        options: [
+          "A. 氧氣",
+          "B. 二氧化碳",
+          "C. 氮氣",
+          "D. 氦氣"
+        ],
+        answer: 1
+      },
+      {
+        id: 40, round: 4,
+        q: "香港政府實施「塑膠購物袋收費計劃」（膠袋徵費），最主要的目的是什麼？",
+        options: [
+          "A. 增加超級市場的利潤",
+          "B. 透過經濟誘因減少市民濫用膠袋，鼓勵自備購物袋",
+          "C. 禁止市民購買任何包裝食物",
+          "D. 讓膠袋變得更美觀"
+        ],
+        answer: 1
+      },
+
+      // Round 5 (41-50) - Sudden Death (+300 / -100)
+      {
+        id: 41, round: 5,
+        q: "中華人民共和國的首都是哪一座城市？",
+        options: [
+          "A. 上海",
+          "B. 北京",
+          "C. 廣州",
+          "D. 深圳"
+        ],
+        answer: 1
+      },
+      {
+        id: 42, round: 5,
+        q: "中國的國旗是「五星紅旗」，旗面上的五顆五角星代表什麼？",
+        options: [
+          "A. 中國的五座名山",
+          "B. 中國共產黨領導下的革命人民大團結",
+          "C. 中國的五條大河",
+          "D. 一年中的五個季節"
+        ],
+        answer: 1
+      },
+      {
+        id: 43, round: 5,
+        q: "被譽為中華民族「母親河」的兩條大河是哪兩條？",
+        options: [
+          "A. 長江與黃河",
+          "B. 珠江與黑龍江",
+          "C. 黃河與雅魯藏布江",
+          "D. 長江與瀾滄江"
+        ],
+        answer: 0
+      },
+      {
+        id: 44, round: 5,
+        q: "中國的地勢整體呈現什麼特徵，導致大多數大河都是「自西向東」流入大海？",
+        options: [
+          "A. 東高西低",
+          "B. 西高東低，呈階梯狀分布",
+          "C. 南高北低",
+          "D. 四周高、中間低"
+        ],
+        answer: 1
+      },
+      {
+        id: 45, round: 5,
+        q: "中國古代「四大發明」對世界文明貢獻巨大。下列哪一項不屬於四大發明？",
+        options: [
+          "A. 造紙術",
+          "B. 指南針",
+          "C. 火藥",
+          "D. 陶瓷技術"
+        ],
+        answer: 3
+      },
+      {
+        id: 46, round: 5,
+        q: "中國是世界上最早發明「印刷術」的國家。北宋時期，哪一位工匠發明了「活字印刷術」？",
+        options: [
+          "A. 蔡倫",
+          "B. 畢昇",
+          "C. 張衡",
+          "D. 祖沖之"
+        ],
+        answer: 1
+      },
+      {
+        id: 47, round: 5,
+        q: "近年祖國航天科技發展一日千里。中國自主建造、在太空運行的空間站命名為什麼？",
+        options: [
+          "A. 嫦娥號",
+          "B. 天宮空間站",
+          "C. 蛟龍號",
+          "D. 復興號"
+        ],
+        answer: 1
+      },
+      {
+        id: 48, round: 5,
+        q: "下列哪一項傳統節日與「紀念愛國詩人屈原」有關，習俗包括賽龍舟和吃粽子？",
+        options: [
+          "A. 中秋節",
+          "B. 重陽節",
+          "C. 端午節",
+          "D. 清明節"
+        ],
+        answer: 2
+      },
+      {
+        id: 49, round: 5,
+        q: "根據《中華人民共和國憲法》和《香港特別行政區基本法》，香港特別行政區實行什麼制度，保持原有的資本主義制度和生活方式五十年不變？",
+        options: [
+          "A. 一國兩制",
+          "B. 聯邦制",
+          "C. 郡縣制",
+          "D. 議會制"
+        ],
+        answer: 0
+      },
+      {
+        id: 50, round: 5,
+        q: "維護國家安全是每一位中國公民（包括香港居民）的責任。每年的哪一天是「全民國家安全教育日」？",
+        options: [
+          "A. 1 月 1 日",
+          "B. 4 月 15 日",
+          "C. 7 月 1 日",
+          "D. 10 月 1 日"
+        ],
+        answer: 1
+      }
+    ];
+
+    // Lucky Power-Up Cards Pool
+    const LUCKY_CARDS = [
+      {
+        id: 'steal',
+        badge: '進攻型道具',
+        icon: '🥷',
+        title: '神偷妙手',
+        desc: '偷取指定另一組 100 分！（若對方不足 100 分則全數偷取）',
+        requiresTarget: true,
+        targetPrompt: '請選擇要偷取 100 分的目標組別：'
+      },
+      {
+        id: 'double',
+        badge: '爆發型道具',
+        icon: '🚀',
+        title: '分數翻倍卡',
+        desc: '本題得分雙倍奉還！立即額外獲得本題同等分數！',
+        requiresTarget: false
+      },
+      {
+        id: 'shield',
+        badge: '防禦型道具',
+        icon: '🛡️',
+        title: '金鐘罩護身符',
+        desc: '獲得「免扣分護身符」1 個！（第五回合答錯可自動抵銷扣分）',
+        requiresTarget: false
+      },
+      {
+        id: 'cheer',
+        badge: '幸運型道具',
+        icon: '🎁',
+        title: '老師加碼大紅包',
+        desc: '全組表現超卓！直接獲得額外 +200 分獎勵！',
+        requiresTarget: false
+      },
+      {
+        id: 'wheel',
+        badge: '驚喜型道具',
+        icon: '🎡',
+        title: '幸運大轉盤',
+        desc: '隨機獲得 +150 至 +300 分神秘大獎！',
+        requiresTarget: false
+      },
+      {
+        id: 'swap',
+        badge: '戰略型道具',
+        icon: '🔄',
+        title: '乾坤大挪移',
+        desc: '可選擇與任意一組交換總分（若已是最高分則自動改為 +150 分）！',
+        requiresTarget: true,
+        targetPrompt: '請選擇要交換分數的組別（或點自己改領 +150 分）：'
+      }
+    ];
+
+    // Default Lucky Star Question IDs (5th and 10th of each round)
+    const DEFAULT_LUCKY_IDS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+    // Team Colors Styling
+    const TEAM_STYLES = [
+      { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-600', lightBg: 'bg-rose-50' },
+      { bg: 'bg-orange-500', border: 'border-orange-400', text: 'text-orange-600', lightBg: 'bg-orange-50' },
+      { bg: 'bg-amber-500', border: 'border-amber-400', text: 'text-amber-700', lightBg: 'bg-amber-50' },
+      { bg: 'bg-emerald-500', border: 'border-emerald-400', text: 'text-emerald-600', lightBg: 'bg-emerald-50' },
+      { bg: 'bg-sky-500', border: 'border-sky-400', text: 'text-sky-600', lightBg: 'bg-sky-50' },
+      { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-600', lightBg: 'bg-purple-50' }
+    ];
+
+    // =========================================================================
+    // 2. GAME STATE & PERSISTENCE
+    // =========================================================================
+    const STORAGE_KEY = 'p4_humanities_monopoly_v1';
+
+    let state = {
+      teams: [
+        { id: 0, name: '第 1 組', score: 0, shields: 0 },
+        { id: 1, name: '第 2 組', score: 0, shields: 0 },
+        { id: 2, name: '第 3 組', score: 0, shields: 0 },
+        { id: 3, name: '第 4 組', score: 0, shields: 0 },
+        { id: 4, name: '第 5 組', score: 0, shields: 0 },
+        { id: 5, name: '第 6 組', score: 0, shields: 0 }
+      ],
+      activeTeamId: null,
+      currentRound: 1,
+      currentQuestionId: null,
+      answeredIds: [], // Array of question IDs completed
+      luckyStarIds: [...DEFAULT_LUCKY_IDS],
+      soundEnabled: true
+    };
+
+    // Runtime transient states
+    let questionAnsweredInSession = false;
+    let currentCardDrawn = null;
+    let cardFlipped = false;
+    let selectedTargetTeamId = null;
+    let cardUsedForCurrentQuestion = false;
+
+    // Timer states
+    const TIMER_DURATIONS = [20, 30, 15];
+    let timerDurationIndex = 0;
+    let timerRemaining = TIMER_DURATIONS[0];
+    let timerInterval = null;
+    let timerRunning = false;
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && Array.isArray(parsed.teams) && parsed.teams.length === 6) {
+            state = { ...state, ...parsed };
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load saved state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('Could not save state:', e);
+      }
+    }
+
+    // =========================================================================
+    // 3. WEB AUDIO API SYNTHESIZED SOUND EFFECTS (ZERO EXTERNAL FILES)
+    // =========================================================================
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!state.soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+
+      if (type === 'click') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(680, now + 0.06);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      } else if (type === 'correct') {
+        // Cheerful major arpeggio
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.35);
+        });
+      } else if (type === 'wrong') {
+        // Gentle low buzzer
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.linearRampToValueAtTime(135, now + 0.35);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.38);
+      } else if (type === 'lucky') {
+        // Sparkle magic chime
+        const notes = [587.33, 739.99, 880, 1174.66, 1479.98];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          gain.gain.setValueAtTime(0.18, now + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.07);
+          osc.stop(now + idx * 0.07 + 0.45);
+        });
+      } else if (type === 'tick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      document.getElementById('sound-btn').textContent = state.soundEnabled ? '🔊' : '🔇';
+      saveState();
+      showToast(state.soundEnabled ? '🔊 音效已開啟' : '🔇 音效已靜音');
+    }
+
+    // =========================================================================
+    // 4. CONFETTI PARTICLE EFFECT
+    // =========================================================================
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiAnimating = false;
+
+    function resizeConfetti() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfetti);
+    resizeConfetti();
+
+    function fireConfetti() {
+      const colors = ['#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+      for (let i = 0; i < 95; i++) {
+        confettiParticles.push({
+          x: window.innerWidth * (0.2 + Math.random() * 0.6),
+          y: window.innerHeight * 0.45,
+          vx: (Math.random() - 0.5) * 16,
+          vy: -Math.random() * 15 - 5,
+          size: Math.random() * 9 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 14,
+          life: 110 + Math.random() * 40
+        });
+      }
+      if (!confettiAnimating) {
+        confettiAnimating = true;
+        animateConfetti();
+      }
+    }
+
+    function animateConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.45; // gravity
+        p.vx *= 0.98;
+        p.rotation += p.vRot;
+        p.life--;
+
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate((p.rotation * Math.PI) / 180);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        confettiCtx.restore();
+      });
+
+      confettiParticles = confettiParticles.filter(p => p.life > 0 && p.y < confettiCanvas.height + 30);
+      if (confettiParticles.length > 0) {
+        requestAnimationFrame(animateConfetti);
+      } else {
+        confettiAnimating = false;
+      }
+    }
+
+    // =========================================================================
+    // 5. TOAST NOTIFICATIONS
+    // =========================================================================
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const bgMap = {
+        info: 'bg-slate-900 text-white border-slate-700',
+        success: 'bg-emerald-600 text-white border-emerald-400',
+        warn: 'bg-amber-400 text-slate-950 border-amber-300',
+        danger: 'bg-rose-600 text-white border-rose-400'
+      };
+      el.className = `px-4 py-2.5 rounded-2xl shadow-xl border-2 font-black text-sm sm:text-base animate-pop ${bgMap[type] || bgMap.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => el.remove(), 300);
+      }, 2600);
+    }
+
+    // =========================================================================
+    // 6. CLASSROOM COUNTDOWN TIMER
+    // =========================================================================
+    function updateTimerDisplay() {
+      const display = document.getElementById('timer-display');
+      display.textContent = `${timerRemaining}s`;
+      if (timerRemaining <= 5 && timerRunning) {
+        display.classList.add('text-rose-400', 'animate-pulse');
+      } else {
+        display.classList.remove('text-rose-400', 'animate-pulse');
+      }
+    }
+
+    function toggleTimer() {
+      playSound('click');
+      const btn = document.getElementById('timer-toggle-btn');
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        btn.textContent = '繼續';
+        btn.className = 'px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition';
+      } else {
+        if (timerRemaining <= 0) {
+          timerRemaining = TIMER_DURATIONS[timerDurationIndex];
+        }
+        timerRunning = true;
+        btn.textContent = '暫停';
+        btn.className = 'px-2 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition';
+        timerInterval = setInterval(() => {
+          timerRemaining--;
+          updateTimerDisplay();
+          if (timerRemaining <= 5 && timerRemaining > 0) {
+            playSound('tick');
+          }
+          if (timerRemaining <= 0) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            btn.textContent = '重設';
+            playSound('wrong');
+            showToast('⏰ 時間到！請作答！', 'warn');
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerRemaining = TIMER_DURATIONS[timerDurationIndex];
+      const btn = document.getElementById('timer-toggle-btn');
+      btn.textContent = '開始';
+      btn.className = 'px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition';
+      updateTimerDisplay();
+    }
+
+    function cycleTimerDuration() {
+      playSound('click');
+      timerDurationIndex = (timerDurationIndex + 1) % TIMER_DURATIONS.length;
+      resetTimer();
+      showToast(`⏱️ 倒數計時已設為 ${TIMER_DURATIONS[timerDurationIndex]} 秒`);
+    }
+
+    // =========================================================================
+    // 7. SCOREBOARD & TEAM SELECTION LOGIC
+    // =========================================================================
+    function renderScoreboard() {
+      const grid = document.getElementById('scoreboard-grid');
+      grid.innerHTML = '';
+
+      state.teams.forEach((team, idx) => {
+        const style = TEAM_STYLES[idx];
+        const isActive = state.activeTeamId === team.id;
+
+        const card = document.createElement('div');
+        card.className = `rounded-2xl p-2 sm:p-2.5 transition-all cursor-pointer border-2 flex flex-col justify-between ${
+          isActive
+            ? 'bg-amber-50 border-amber-400 team-active-ring'
+            : 'bg-slate-800/90 border-slate-700 hover:border-slate-500 text-white'
+        }`;
+
+        card.onclick = (e) => {
+          // Avoid triggering selection when clicking +/- buttons
+          if (e.target.closest('button')) return;
+          selectActiveTeam(team.id);
+        };
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-3 h-3 rounded-full shrink-0 ${style.bg}"></span>
+              <span class="font-black text-xs sm:text-sm truncate ${isActive ? 'text-slate-900' : 'text-white'}">
+                ${escapeHtml(team.name)}
+              </span>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              ${team.shields > 0 ? `<span title="免扣分護身符 x${team.shields}" class="text-xs bg-sky-500/20 text-sky-300 border border-sky-400/40 px-1.5 rounded-md font-bold">🛡️${team.shields}</span>` : ''}
+              ${isActive ? `<span class="text-[10px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md">搶答中</span>` : ''}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-1">
+            <div class="font-mono font-black text-xl sm:text-2xl tracking-tight ${
+              team.score < 0
+                ? 'text-rose-400'
+                : isActive
+                ? 'text-indigo-700'
+                : 'text-amber-300'
+            }">
+              ${team.score}
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button onclick="adjustTeamScore(${team.id}, -100)" title="扣 100 分" class="w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center transition ${
+                isActive ? 'bg-rose-100 hover:bg-rose-200 text-rose-700' : 'bg-slate-700 hover:bg-rose-600 text-slate-200 hover:text-white'
+              }">
+                -100
+              </button>
+              <button onclick="adjustTeamScore(${team.id}, 100)" title="加 100 分" class="w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center transition ${
+                isActive ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-slate-700 hover:bg-emerald-600 text-slate-200 hover:text-white'
+              }">
+                +100
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Update top banner active team label
+      const label = document.getElementById('current-answering-label');
+      if (state.activeTeamId !== null) {
+        const t = state.teams[state.activeTeamId];
+        label.textContent = `🙋 ${t.name}（目前 ${t.score} 分）`;
+        label.className = 'inline-block px-3 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-base sm:text-lg shadow-sm';
+      } else {
+        label.textContent = '尚未指定（請點擊下方組別卡片）';
+        label.className = 'inline-block px-3 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-sm sm:text-base';
+      }
+
+      // Update progress badge
+      document.getElementById('progress-badge').textContent = `進度：${state.answeredIds.length} / 50 題`;
+    }
+
+    function selectActiveTeam(teamId) {
+      playSound('click');
+      state.activeTeamId = teamId;
+      saveState();
+      renderScoreboard();
+    }
+
+    function clearActiveTeam() {
+      playSound('click');
+      state.activeTeamId = null;
+      saveState();
+      renderScoreboard();
+    }
+
+    function adjustTeamScore(teamId, delta, silent = false) {
+      const team = state.teams[teamId];
+      if (!team) return;
+      team.score += delta;
+      saveState();
+      renderScoreboard();
+      if (!silent) {
+        playSound(delta >= 0 ? 'correct' : 'wrong');
+        const sign = delta >= 0 ? '+' : '';
+        showToast(`${team.name} ${sign}${delta} 分！`, delta >= 0 ? 'success' : 'danger');
+      }
+    }
+
+    // =========================================================================
+    // 8. BOARD VIEW & QUESTION GRID RENDERING
+    // =========================================================================
+    function switchView(viewName) {
+      playSound('click');
+      const boardSec = document.getElementById('view-board');
+      const qSec = document.getElementById('view-question');
+      if (viewName === 'board') {
+        resetTimer();
+        boardSec.classList.remove('hidden');
+        qSec.classList.add('hidden');
+        renderBoard();
+      } else {
+        boardSec.classList.add('hidden');
+        qSec.classList.remove('hidden');
+      }
+    }
+
+    function selectRound(roundId) {
+      playSound('click');
+      state.currentRound = roundId;
+      saveState();
+      renderBoard();
+    }
+
+    function renderBoard() {
+      // Render Round Tabs
+      const tabsContainer = document.getElementById('round-tabs');
+      tabsContainer.innerHTML = '';
+
+      ROUNDS.forEach(r => {
+        const roundQuestions = QUESTIONS.filter(q => q.round === r.id);
+        const doneCount = roundQuestions.filter(q => state.answeredIds.includes(q.id)).length;
+        const isSelected = state.currentRound === r.id;
+
+        const btn = document.createElement('button');
+        btn.onclick = () => selectRound(r.id);
+        btn.className = `p-2.5 sm:p-3 rounded-2xl text-left transition-all border-2 flex flex-col justify-between ${
+          isSelected
+            ? `bg-gradient-to-r ${r.colorClass} text-white border-white shadow-lg scale-[1.02]`
+            : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 shadow-sm'
+        }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full mb-1">
+            <span class="font-black text-xs sm:text-sm">${r.shortTitle}</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${
+              isSelected ? 'bg-black/25 text-white' : 'bg-slate-100 text-slate-600'
+            }">${doneCount}/10</span>
+          </div>
+          <div class="text-[11px] sm:text-xs font-bold truncate ${isSelected ? 'text-white/90' : 'text-slate-500'}">
+            ${r.ruleText}
+          </div>
+        `;
+        tabsContainer.appendChild(btn);
+      });
+
+      // Render Round Header Banner
+      const activeRound = ROUNDS.find(r => r.id === state.currentRound) || ROUNDS[0];
+      const headerCard = document.getElementById('round-header-card');
+      headerCard.className = `rounded-3xl p-4 sm:p-5 text-white shadow-md flex flex-wrap items-center justify-between gap-3 transition-all bg-gradient-to-r ${activeRound.colorClass}`;
+      document.getElementById('round-badge').textContent = activeRound.shortTitle;
+      document.getElementById('round-rule-badge').textContent = activeRound.ruleText;
+      document.getElementById('round-title').textContent = activeRound.title;
+
+      // Render 10 Question Cards for this round
+      const grid = document.getElementById('question-grid');
+      grid.innerHTML = '';
+
+      const roundQs = QUESTIONS.filter(q => q.round === state.currentRound);
+      roundQs.forEach(q => {
+        const isAnswered = state.answeredIds.includes(q.id);
+        const card = document.createElement('button');
+        card.onclick = () => openQuestion(q.id);
+
+        if (isAnswered) {
+          card.className = 'group relative rounded-3xl p-4 sm:p-5 bg-slate-200/80 border-2 border-slate-300 text-slate-400 flex flex-col items-center justify-center min-h-[125px] sm:min-h-[145px] transition hover:bg-slate-200';
+          card.innerHTML = `
+            <span class="absolute top-2.5 right-2.5 text-xs font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full">✓ 已完成</span>
+            <div class="text-3xl sm:text-4xl font-black mb-1 line-through">第 ${q.id} 題</div>
+            <div class="text-xs font-bold">點擊可重溫題目</div>
+          `;
+        } else {
+          // Keep Lucky Star hidden on board for classroom suspense!
+          card.className = 'game-btn group relative rounded-3xl p-4 sm:p-5 bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-400 text-slate-800 flex flex-col items-center justify-center min-h-[125px] sm:min-h-[145px] transition';
+          card.innerHTML = `
+            <span class="absolute top-2.5 left-3 text-xs font-black px-2.5 py-0.5 rounded-full border ${activeRound.badgeBg}">
+              +${activeRound.pointsCorrect} 分
+            </span>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 group-hover:bg-amber-400 text-indigo-700 group-hover:text-slate-950 font-black text-2xl sm:text-3xl flex items-center justify-center mb-2 transition-colors shadow-inner">
+              ${q.id}
+            </div>
+            <div class="font-black text-sm sm:text-base text-slate-700 group-hover:text-slate-950">
+              挑戰第 ${q.id} 題
+            </div>
+          `;
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function playNextUnanswered() {
+      // First look in current round, then across all rounds
+      const inRound = QUESTIONS.find(q => q.round === state.currentRound && !state.answeredIds.includes(q.id));
+      if (inRound) {
+        openQuestion(inRound.id);
+        return;
+      }
+      const anyLeft = QUESTIONS.find(q => !state.answeredIds.includes(q.id));
+      if (anyLeft) {
+        state.currentRound = anyLeft.round;
+        openQuestion(anyLeft.id);
+      } else {
+        showToast('🎉 全部 50 題已完成！開啟頒獎台吧！', 'success');
+        openPodium();
+      }
+    }
+
+    // =========================================================================
+    // 9. QUESTION PRESENTATION & MC ANSWERING LOGIC
+    // =========================================================================
+    function openQuestion(questionId) {
+      playSound('click');
+      const q = QUESTIONS.find(item => item.id === questionId);
+      if (!q) return;
+
+      state.currentQuestionId = q.id;
+      state.currentRound = q.round;
+      questionAnsweredInSession = false;
+      cardUsedForCurrentQuestion = false;
+
+      const roundInfo = ROUNDS.find(r => r.id === q.round);
+
+      // Update Top Bar
+      const topBar = document.getElementById('q-top-bar');
+      topBar.className = `px-5 py-3.5 text-white flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r ${roundInfo.colorClass}`;
+      document.getElementById('q-round-label').textContent = roundInfo.title;
+      document.getElementById('q-points-pill').textContent = roundInfo.ruleText;
+
+      // Hide lucky indicator until answered correctly!
+      document.getElementById('q-lucky-indicator').classList.add('hidden');
+
+      // Question Number & Text
+      document.getElementById('q-number-badge').textContent = q.id;
+      document.getElementById('q-text').textContent = q.q;
+
+      // Render 4 Options
+      const optionsGrid = document.getElementById('q-options-grid');
+      optionsGrid.innerHTML = '';
+
+      const optionColors = [
+        'hover:border-rose-400 hover:bg-rose-50/70',
+        'hover:border-amber-400 hover:bg-amber-50/70',
+        'hover:border-emerald-400 hover:bg-emerald-50/70',
+        'hover:border-sky-400 hover:bg-sky-50/70'
+      ];
+
+      q.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.id = `opt-btn-${idx}`;
+        btn.onclick = () => handleOptionSelect(idx);
+        btn.className = `game-btn w-full text-left p-4 sm:p-5 rounded-2xl bg-slate-50 border-2 border-slate-200 ${optionColors[idx]} transition-all flex items-center gap-3.5 group`;
+
+        // Split "A. " prefix for crisp badge styling
+        const letter = optText.charAt(0);
+        const bodyText = optText.slice(2).trim();
+
+        btn.innerHTML = `
+          <span class="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white border-2 border-slate-300 group-hover:border-indigo-500 group-hover:bg-indigo-600 group-hover:text-white font-black text-xl sm:text-2xl flex items-center justify-center text-slate-700 transition-colors shadow-sm">
+            ${letter}
+          </span>
+          <span class="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 leading-snug">
+            ${escapeHtml(bodyText)}
+          </span>
+        `;
+        optionsGrid.appendChild(btn);
+      });
+
+      // Reset Feedback Panel
+      const fbPanel = document.getElementById('q-feedback-panel');
+      fbPanel.classList.add('hidden');
+      document.getElementById('draw-lucky-card-btn').classList.add('hidden');
+      document.getElementById('quick-award-box').classList.add('hidden');
+
+      resetTimer();
+      switchView('question');
+    }
+
+    function handleOptionSelect(selectedIndex) {
+      if (questionAnsweredInSession) return;
+      questionAnsweredInSession = true;
+
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-toggle-btn').textContent = '已停';
+      }
+
+      const q = QUESTIONS.find(item => item.id === state.currentQuestionId);
+      const roundInfo = ROUNDS.find(r => r.id === q.round);
+      const isCorrect = selectedIndex === q.answer;
+      const isLucky = state.luckyStarIds.includes(q.id);
+
+      // Mark question as completed
+      if (!state.answeredIds.includes(q.id)) {
+        state.answeredIds.push(q.id);
+      }
+
+      // Style all option buttons
+      q.options.forEach((_, idx) => {
+        const btn = document.getElementById(`opt-btn-${idx}`);
+        btn.disabled = true;
+        btn.classList.remove('hover:border-rose-400', 'hover:bg-rose-50/70', 'hover:border-amber-400', 'hover:bg-amber-50/70', 'hover:border-emerald-400', 'hover:bg-emerald-50/70', 'hover:border-sky-400', 'hover:bg-sky-50/70');
+
+        if (idx === q.answer) {
+          btn.className = 'w-full text-left p-4 sm:p-5 rounded-2xl bg-emerald-100 border-4 border-emerald-500 shadow-md flex items-center gap-3.5 scale-[1.01] transition-all';
+          btn.querySelector('span:first-child').className = 'shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-600 text-white font-black text-xl sm:text-2xl flex items-center justify-center shadow';
+        } else if (idx === selectedIndex && !isCorrect) {
+          btn.className = 'w-full text-left p-4 sm:p-5 rounded-2xl bg-rose-100 border-4 border-rose-500 opacity-90 flex items-center gap-3.5 transition-all';
+          btn.querySelector('span:first-child').className = 'shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-600 text-white font-black text-xl sm:text-2xl flex items-center justify-center shadow';
+        } else {
+          btn.className = 'w-full text-left p-4 sm:p-5 rounded-2xl bg-slate-100 border-2 border-slate-200 opacity-50 flex items-center gap-3.5';
+        }
+      });
+
+      // Prepare Feedback UI
+      const fbPanel = document.getElementById('q-feedback-panel');
+      const fbHeadline = document.getElementById('feedback-headline');
+      const fbDetail = document.getElementById('feedback-detail');
+      const fbNote = document.getElementById('feedback-teacher-note');
+      const drawBtn = document.getElementById('draw-lucky-card-btn');
+      const quickBox = document.getElementById('quick-award-box');
+
+      fbPanel.classList.remove('hidden');
+
+      if (q.note) {
+        fbNote.textContent = q.note;
+        fbNote.classList.remove('hidden');
+      } else {
+        fbNote.classList.add('hidden');
+      }
+
+      const activeTeam = state.activeTeamId !== null ? state.teams[state.activeTeamId] : null;
+
+      if (isCorrect) {
+        playSound(isLucky ? 'lucky' : 'correct');
+        fireConfetti();
+
+        fbPanel.className = 'mt-6 p-5 rounded-2xl border-2 bg-emerald-50 border-emerald-300 animate-pop';
+
+        if (activeTeam) {
+          adjustTeamScore(activeTeam.id, roundInfo.pointsCorrect, true);
+          fbHeadline.innerHTML = `🎉 恭喜【${escapeHtml(activeTeam.name)}】答對了！自動加 <span class="text-emerald-700 underline">+${roundInfo.pointsCorrect} 分</span>！`;
+          quickBox.classList.add('hidden');
+        } else {
+          fbHeadline.innerHTML = `🎉 答對了！（本題值 +${roundInfo.pointsCorrect} 分）`;
+          quickBox.classList.remove('hidden');
+        }
+
+        fbDetail.textContent = `正確答案：${q.options[q.answer]}`;
+
+        // Reveal Lucky Star surprise if applicable!
+        if (isLucky) {
+          document.getElementById('q-lucky-indicator').classList.remove('hidden');
+          drawBtn.classList.remove('hidden');
+          showToast('⭐ 觸發隱藏幸運星題！快抽取功能卡！', 'warn');
+        } else {
+          drawBtn.classList.add('hidden');
+        }
+      } else {
+        playSound('wrong');
+        fbPanel.className = 'mt-6 p-5 rounded-2xl border-2 bg-rose-50 border-rose-300 animate-pop';
+        quickBox.classList.add('hidden');
+        drawBtn.classList.add('hidden');
+
+        if (roundInfo.pointsWrong < 0 && activeTeam) {
+          // Round 5 Sudden Death penalty check (with Shield protection!)
+          if (activeTeam.shields > 0) {
+            activeTeam.shields--;
+            saveState();
+            renderScoreboard();
+            fbHeadline.innerHTML = `🛡️ 【${escapeHtml(activeTeam.name)}】答錯了，但「金鐘罩護身符」自動生效，免扣 100 分！`;
+          } else {
+            adjustTeamScore(activeTeam.id, roundInfo.pointsWrong, true);
+            fbHeadline.innerHTML = `💥 【${escapeHtml(activeTeam.name)}】答錯了！第五回合生死戰扣 <span class="text-rose-700 underline">100 分</span>！`;
+          }
+        } else if (roundInfo.pointsWrong < 0 && !activeTeam) {
+          fbHeadline.innerHTML = `💥 答錯了！（第五回合生死戰：若有指定組別將扣 100 分）`;
+        } else {
+          fbHeadline.innerHTML = `😅 差一點點！本題不扣分，繼續加油！`;
+        }
+
+        fbDetail.textContent = `正確答案是：${q.options[q.answer]}`;
+      }
+
+      saveState();
+      renderScoreboard();
+    }
+
+    function quickAwardToTeam(teamId) {
+      const q = QUESTIONS.find(item => item.id === state.currentQuestionId);
+      const roundInfo = ROUNDS.find(r => r.id === q.round);
+      state.activeTeamId = teamId;
+      adjustTeamScore(teamId, roundInfo.pointsCorrect, false);
+      document.getElementById('quick-award-box').classList.add('hidden');
+      document.getElementById('feedback-headline').innerHTML = `🎉 已補發 <span class="text-emerald-700">+${roundInfo.pointsCorrect} 分</span> 給【${escapeHtml(state.teams[teamId].name)}】！`;
+    }
+
+    function resetCurrentQuestion() {
+      if (state.currentQuestionId) {
+        openQuestion(state.currentQuestionId);
+      }
+    }
+
+    function goToNextQuestion() {
+      const nextId = state.currentQuestionId + 1;
+      if (nextId <= 50) {
+        openQuestion(nextId);
+      } else {
+        switchView('board');
+        openPodium();
+      }
+    }
+
+    // =========================================================================
+    // 10. LUCKY STAR FUNCTION CARD DRAW MODAL
+    // =========================================================================
+    function openLuckyCardModal() {
+      if (cardUsedForCurrentQuestion) {
+        showToast('本題的功能卡已經抽過囉！', 'warn');
+        return;
+      }
+      playSound('lucky');
+      cardFlipped = false;
+      selectedTargetTeamId = null;
+
+      // Pick a random card
+      currentCardDrawn = LUCKY_CARDS[Math.floor(Math.random() * LUCKY_CARDS.length)];
+
+      // Reset card visual to back
+      document.getElementById('lucky-card-inner').classList.remove('rotate-y-180');
+      document.getElementById('lucky-card-actions').classList.add('hidden');
+      document.getElementById('card-target-selector').classList.add('hidden');
+
+      const drawerTeam = state.activeTeamId !== null ? state.teams[state.activeTeamId] : null;
+      document.getElementById('lucky-drawer-team-text').textContent = drawerTeam
+        ? `幸運得主：【${drawerTeam.name}】— 點擊卡片翻開驚喜！`
+        : '請先確保已點選答對組別，再點擊卡片翻開驚喜！';
+
+      // Populate card front
+      document.getElementById('card-badge').textContent = currentCardDrawn.badge;
+      document.getElementById('card-icon').textContent = currentCardDrawn.icon;
+      document.getElementById('card-title').textContent = currentCardDrawn.title;
+      document.getElementById('card-desc').textContent = currentCardDrawn.desc;
+
+      document.getElementById('lucky-modal').classList.remove('hidden');
+    }
+
+    function flipLuckyCard() {
+      if (cardFlipped) return;
+      cardFlipped = true;
+      playSound('lucky');
+      fireConfetti();
+
+      document.getElementById('lucky-card-inner').classList.add('rotate-y-180');
+
+      setTimeout(() => {
+        const actionsDiv = document.getElementById('lucky-card-actions');
+        const targetSelector = document.getElementById('card-target-selector');
+        const targetBtns = document.getElementById('card-target-buttons');
+        actionsDiv.classList.remove('hidden');
+
+        if (currentCardDrawn.requiresTarget) {
+          targetSelector.classList.remove('hidden');
+          document.getElementById('card-target-prompt').textContent = currentCardDrawn.targetPrompt;
+          targetBtns.innerHTML = '';
+
+          state.teams.forEach((t, idx) => {
+            // For steal card, skip active team; for swap card, allow all
+            if (currentCardDrawn.id === 'steal' && t.id === state.activeTeamId) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'target-team-opt px-2.5 py-2 rounded-xl bg-white border-2 border-slate-300 hover:border-amber-400 font-black text-xs text-slate-800 transition';
+            btn.textContent = `${t.name} (${t.score})`;
+            btn.onclick = () => {
+              playSound('click');
+              selectedTargetTeamId = t.id;
+              document.querySelectorAll('.target-team-opt').forEach(b => {
+                b.classList.remove('bg-amber-400', 'border-amber-500', 'text-slate-950');
+                b.classList.add('bg-white', 'border-slate-300');
+              });
+              btn.classList.remove('bg-white', 'border-slate-300');
+              btn.classList.add('bg-amber-400', 'border-amber-500', 'text-slate-950');
+            };
+            targetBtns.appendChild(btn);
+          });
+        } else {
+          targetSelector.classList.add('hidden');
+        }
+      }, 450);
+    }
+
+    function applyLuckyCardEffect() {
+      if (state.activeTeamId === null) {
+        showToast('⚠️ 請先在下方點選獲得功能卡的組別！', 'warn');
+        return;
+      }
+
+      const actor = state.teams[state.activeTeamId];
+      const q = QUESTIONS.find(item => item.id === state.currentQuestionId);
+      const roundInfo = ROUNDS.find(r => r.id === q.round);
+
+      if (currentCardDrawn.requiresTarget && selectedTargetTeamId === null) {
+        showToast('⚠️ 請先點選一個目標組別！', 'warn');
+        return;
+      }
+
+      if (currentCardDrawn.id === 'steal') {
+        const victim = state.teams[selectedTargetTeamId];
+        const stolen = Math.min(100, Math.max(0, victim.score));
+        if (stolen > 0) {
+          victim.score -= stolen;
+          actor.score += stolen;
+          showToast(`🥷 【${actor.name}】從【${victim.name}】偷取了 ${stolen} 分！`, 'success');
+        } else {
+          actor.score += 100;
+          showToast(`🥷 對方沒有分數可偷，系統改為獎勵【${actor.name}】+100 分！`, 'success');
+        }
+      } else if (currentCardDrawn.id === 'double') {
+        actor.score += roundInfo.pointsCorrect;
+        showToast(`🚀 分數翻倍！【${actor.name}】再加 +${roundInfo.pointsCorrect} 分！`, 'success');
+      } else if (currentCardDrawn.id === 'shield') {
+        actor.shields += 1;
+        showToast(`🛡️ 【${actor.name}】獲得「金鐘罩護身符」x1！`, 'success');
+      } else if (currentCardDrawn.id === 'cheer') {
+        actor.score += 200;
+        showToast(`🎁 老師大紅包！【${actor.name}】獲得 +200 分！`, 'success');
+      } else if (currentCardDrawn.id === 'wheel') {
+        const prizes = [150, 200, 250, 300];
+        const won = prizes[Math.floor(Math.random() * prizes.length)];
+        actor.score += won;
+        showToast(`🎡 幸運大轉盤轉出 +${won} 分給【${actor.name}】！`, 'success');
+      } else if (currentCardDrawn.id === 'swap') {
+        const target = state.teams[selectedTargetTeamId];
+        if (target.id === actor.id) {
+          actor.score += 150;
+          showToast(`🔄 【${actor.name}】選擇保留原分並獲得 +150 分獎勵！`, 'success');
+        } else {
+          const temp = actor.score;
+          actor.score = target.score;
+          target.score = temp;
+          showToast(`🔄 乾坤大挪移！【${actor.name}】與【${target.name}】交換了總分！`, 'success');
+        }
+      }
+
+      cardUsedForCurrentQuestion = true;
+      document.getElementById('draw-lucky-card-btn').classList.add('hidden');
+      playSound('correct');
+      fireConfetti();
+      saveState();
+      renderScoreboard();
+      closeLuckyModal();
+    }
+
+    function closeLuckyModal() {
+      document.getElementById('lucky-modal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 11. TEACHER SETTINGS MODAL
+    // =========================================================================
+    function openTeacherSettings() {
+      playSound('click');
+      // Render team name inputs
+      const nameContainer = document.getElementById('team-name-inputs');
+      nameContainer.innerHTML = '';
+      state.teams.forEach((t, idx) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200';
+        div.innerHTML = `
+          <span class="w-3.5 h-3.5 rounded-full shrink-0 ${TEAM_STYLES[idx].bg}"></span>
+          <input type="text" maxlength="10" value="${escapeHtml(t.name)}"
+            onchange="updateTeamName(${t.id}, this.value)"
+            class="w-full bg-white px-2.5 py-1 rounded-lg border border-slate-300 font-bold text-sm text-slate-800 focus:outline-none focus:border-indigo-500" />
+        `;
+        nameContainer.appendChild(div);
+      });
+
+      renderLuckyStarToggles();
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function updateTeamName(teamId, newName) {
+      const trimmed = newName.trim();
+      if (trimmed) {
+        state.teams[teamId].name = trimmed;
+        saveState();
+        renderScoreboard();
+      }
+    }
+
+    function renderLuckyStarToggles() {
+      const container = document.getElementById('lucky-star-toggles');
+      container.innerHTML = '';
+      for (let i = 1; i <= 50; i++) {
+        const isLucky = state.luckyStarIds.includes(i);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => toggleLuckyStarId(i);
+        btn.className = `py-1.5 rounded-xl font-black text-xs border-2 transition ${
+          isLucky
+            ? 'bg-amber-400 border-amber-500 text-slate-950 shadow-sm'
+            : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'
+        }`;
+        btn.textContent = isLucky ? `⭐${i}` : `${i}`;
+        container.appendChild(btn);
+      }
+    }
+
+    function toggleLuckyStarId(id) {
+      playSound('click');
+      if (state.luckyStarIds.includes(id)) {
+        state.luckyStarIds = state.luckyStarIds.filter(item => item !== id);
+      } else {
+        state.luckyStarIds.push(id);
+      }
+      saveState();
+      renderLuckyStarToggles();
+    }
+
+    function resetDefaultLuckyStars() {
+      playSound('click');
+      state.luckyStarIds = [...DEFAULT_LUCKY_IDS];
+      saveState();
+      renderLuckyStarToggles();
+      showToast('⭐ 已恢復預設幸運星題（第 5、10、15...50 題）');
+    }
+
+    function closeTeacherSettings() {
+      playSound('click');
+      document.getElementById('settings-modal').classList.add('hidden');
+      renderScoreboard();
+    }
+
+    // Two-step safe reset without using browser confirm()
+    let resetConfirmPending = false;
+    function confirmResetGame() {
+      const btn = event.currentTarget;
+      if (!resetConfirmPending) {
+        resetConfirmPending = true;
+        btn.textContent = '⚠️ 確定清空全部分數？再按一次確認！';
+        btn.className = 'px-4 py-2 rounded-xl bg-rose-600 text-white font-black text-sm animate-pulse';
+        setTimeout(() => {
+          resetConfirmPending = false;
+          if (btn) {
+            btn.textContent = '🗑️ 重置所有分數與進度';
+            btn.className = 'px-4 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-sm transition';
+          }
+        }, 4000);
+        return;
+      }
+
+      // Execute full reset
+      resetConfirmPending = false;
+      state.teams.forEach((t, i) => {
+        t.name = `第 ${i + 1} 組`;
+        t.score = 0;
+        t.shields = 0;
+      });
+      state.activeTeamId = null;
+      state.currentRound = 1;
+      state.answeredIds = [];
+      state.luckyStarIds = [...DEFAULT_LUCKY_IDS];
+      saveState();
+      closeTeacherSettings();
+      switchView('board');
+      renderScoreboard();
+      showToast('🔄 遊戲已完全重置，準備好開始新比賽！', 'success');
+    }
+
+    // =========================================================================
+    // 12. FINAL PODIUM / AWARDS MODAL
+    // =========================================================================
+    function openPodium() {
+      playSound('lucky');
+      fireConfetti();
+
+      const ranked = [...state.teams].sort((a, b) => b.score - a.score);
+      const top3Container = document.getElementById('podium-top3');
+      const othersContainer = document.getElementById('podium-others');
+
+      // Visual podium order: 2nd (left), 1st (center), 3rd (right)
+      const podiumOrder = [
+        { team: ranked[1], rank: 2, medal: '🥈', height: 'h-32 sm:h-40', bg: 'from-slate-300 to-slate-400 text-slate-950' },
+        { team: ranked[0], rank: 1, medal: '🥇', height: 'h-40 sm:h-48', bg: 'from-amber-300 via-yellow-400 to-amber-500 text-slate-950' },
+        { team: ranked[2], rank: 3, medal: '🥉', height: 'h-24 sm:h-32', bg: 'from-orange-300 to-amber-600 text-slate-950' }
+      ];
+
+      top3Container.innerHTML = '';
+      podiumOrder.forEach(slot => {
+        const col = document.createElement('div');
+        col.className = 'flex flex-col items-center';
+        col.innerHTML = `
+          <div class="text-3xl sm:text-4xl mb-1 animate-float">${slot.medal}</div>
+          <div class="font-black text-base sm:text-xl text-white mb-0.5 truncate max-w-full px-1">
+            ${escapeHtml(slot.team.name)}
+          </div>
+          <div class="font-mono font-black text-amber-300 text-lg sm:text-2xl mb-2">
+            ${slot.team.score} 分
+          </div>
+          <div class="w-full ${slot.height} rounded-t-2xl bg-gradient-to-b ${slot.bg} shadow-xl flex items-center justify-center font-black text-2xl sm:text-3xl border-t-4 border-white/60">
+            第 ${slot.rank} 名
+          </div>
+        `;
+        top3Container.appendChild(col);
+      });
+
+      othersContainer.innerHTML = '';
+      ranked.slice(3).forEach((team, idx) => {
+        const rankNum = idx + 4;
+        const badge = document.createElement('div');
+        badge.className = 'bg-white/10 border border-white/15 rounded-2xl px-4 py-2.5 flex items-center justify-between';
+        badge.innerHTML = `
+          <span class="font-bold text-slate-300 text-sm">第 ${rankNum} 名・${escapeHtml(team.name)}</span>
+          <span class="font-mono font-black text-amber-300">${team.score} 分</span>
+        `;
+        othersContainer.appendChild(badge);
+      });
+
+      document.getElementById('podium-modal').classList.remove('hidden');
+    }
+
+    function closePodium() {
+      playSound('click');
+      document.getElementById('podium-modal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 13. HELPERS & INITIALIZATION
+    // =========================================================================
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      document.getElementById('sound-btn').textContent = state.soundEnabled ? '🔊' : '🔇';
+      updateTimerDisplay();
+      renderScoreboard();
+      renderBoard();
+    });
+  </script>
+</body>
+</html>
